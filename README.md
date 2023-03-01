@@ -3,3 +3,4 @@
 
 ## RESOURCES
 https://crates.io/crates/tobj
+https://github.com/ssloy/tinyrenderer/wiki
