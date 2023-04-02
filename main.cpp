@@ -8,8 +8,5 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	Object	*obj = new Object(argv[1]);
-
-	delete obj;
 	return 0;
 }
