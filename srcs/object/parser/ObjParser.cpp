@@ -7,11 +7,11 @@ ObjParser::ObjParser(const std::string file_path)
 
 	while (std::getline(obj_file, line))
 	{
-		if (strncmp("v ", line.c_str(), 2))
+		if (!strncmp("v ", line.c_str(), 2))
 			this->parse_vertex(line.c_str());
-		else if (strncmp("l ", line.c_str(), 2))
+		else if (!strncmp("l ", line.c_str(), 2))
 			this->parse_line(line.c_str());
-		else if (strncmp("mtllib ", line.c_str(), 7))
+		else if (!strncmp("mtllib ", line.c_str(), 7))
 			this->parse_materials_file(line);
 	}
 }
@@ -47,5 +47,5 @@ void	ObjParser::parse_materials_file(const std::string line)
 {
 	MTLParser	mtl_parser(line.substr(line.find(' ') + 1));
 
-
+	
 }
