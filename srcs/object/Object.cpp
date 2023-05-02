@@ -20,3 +20,6 @@ Object::~Object(void)
 {
 	this->_vertices.clear();
 }
+
+void	Object::set_vertices(const std::vector<Vertex>	&v) {this->_vertices = v; }
+void	Object::set_faces(const std::vector<Face>	&f) { this->_faces = f; }

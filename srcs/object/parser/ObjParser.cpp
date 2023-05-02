@@ -53,3 +53,13 @@ void	ObjParser::parse_materials_file(const std::string line)
 	MTLParser	mtl_parser(line.substr(line.find(' ') + 1));
 
 }
+
+Object	ObjParser::generate_object() const
+{
+	Object	object;
+
+	object.set_faces(this->_faces);
+	object.set_vertices(this->_vertices);
+
+	return object;   
+}
