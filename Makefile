@@ -1,24 +1,30 @@
-NAME = scop
+TARGET := scop
+
+BUILD_DIR := ./build
+SRC_DIRS := ./srcs
+
+SRCS := $(shell find $(SRC_DIRS) -name '*.cpp')
+
+OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
+
+INC_DIRS := $(shell find $(SRC_DIRS) -type d)
+INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CXX = clang++
+CXXFLAGS := $(INC_FLAGS) -Wall -Wextra -Werror
 
-CXXFLAGS = -Wall -Werror -Wextra
+all: $(BUILD_DIR)/$(TARGET)
 
-SRCS = main.cpp Object.cpp
+$(BUILD_DIR)/$(TARGET): $(OBJS)
+	$(CXX) $(OBJS) -o $@
 
-OBJS = $(SRCS:.cpp=.o)
-
-all: $(NAME)
-
-$(NAME): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
+$(BUILD_DIR)/%.cpp.o: %.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS)
+	rm -r $(BUILD_DIR)
 
-fclean:	clean
-	rm -f $(NAME)
+re: clean all
 
-re:	fclean all
-
-.PHONY: all clean fclean re
+.PHONY: clean fclean re

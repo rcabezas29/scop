@@ -32,6 +32,10 @@ MTLParser::MTLParser(const std::string file_path)
 	}
 }
 
+MTLParser::~MTLParser()
+{
+}
+
 Color	MTLParser::parse_ambient(const char *line) const
 {
 	float	r, g, b;

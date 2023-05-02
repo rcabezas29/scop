@@ -16,6 +16,11 @@ ObjParser::ObjParser(const std::string file_path)
 	}
 }
 
+ObjParser::~ObjParser()
+{
+	
+}
+
 void	ObjParser::parse_vertex(const char *line)
 {
 	float	x, y, z;
@@ -34,9 +39,9 @@ void	ObjParser::parse_line(const char *line)
 	int	scan_ret = sscanf(line, "v %f %f %f %f %f %f", &x1, &y1, &z1, &x2, &y2, &z2);
 	if (scan_ret != 0)
 	{
-		Vertex	v[2];
-		v[0] = (Vertex){x1, y1, z1};
-		v[1] = (Vertex){x2, y2, z2};
+		std::pair<Vertex, Vertex>	v;
+		v.first = (Vertex){x1, y1, z1};
+		v.second = (Vertex){x2, y2, z2};
 		this->_lines.push_back(v);
 	}
 	else
@@ -47,5 +52,4 @@ void	ObjParser::parse_materials_file(const std::string line)
 {
 	MTLParser	mtl_parser(line.substr(line.find(' ') + 1));
 
-	
 }

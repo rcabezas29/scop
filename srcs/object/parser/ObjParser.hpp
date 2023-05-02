@@ -4,7 +4,6 @@
 #include <fstream>
 #include <iostream>
 #include <cstring>
-#include "structs/Vertex.hpp"
 #include "structs/Face.hpp"
 #include "MTLParser.hpp"
 
@@ -13,7 +12,7 @@ class ObjParser
 	private:
 		std::vector<Face>		_faces;
 		std::vector<Vertex>		_vertices;
-		std::vector<Vertex[2]>	_lines;
+		std::vector<std::pair<Vertex, Vertex> >	_lines;
 		std::vector<Material>	_materials;
 
 	public:
@@ -24,4 +23,3 @@ class ObjParser
 		void	parse_line(const char *line);
 		void	parse_materials_file(const std::string line);
 };
-
