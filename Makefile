@@ -20,6 +20,7 @@ $(BUILD_DIR)/$(TARGET): $(OBJS)
 $(BUILD_DIR)/%.cpp.o: %.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+	cmake -S glfw -B build/glfw -D GLFW_USE_WAYLAND=1
 
 clean:
 	rm -r $(BUILD_DIR)
