@@ -16,20 +16,17 @@ ObjParser::ObjParser(const std::string file_path)
 	}
 }
 
-ObjParser::~ObjParser()
-{
-	
-}
+ObjParser::~ObjParser() {}
 
 void	ObjParser::parse_vertex(const char *line)
 {
 	float	x, y, z;
 
 	int	scan_ret = sscanf(line, "v %f %f %f", &x, &y, &z);
-	if (scan_ret != 0)
+	if (scan_ret == 3)
 		this->_vertices.push_back((Vertex){x, y, z});
 	else
-		std::cerr << "Error while reading a vertex" << std::endl; // Create class Exception
+		throw ParsingObjectException("Error while reading a vertex");
 }
 
 void	ObjParser::parse_line(const char *line)
@@ -37,7 +34,7 @@ void	ObjParser::parse_line(const char *line)
 	float	x1, y1, z1, x2, y2, z2;
 
 	int	scan_ret = sscanf(line, "v %f %f %f %f %f %f", &x1, &y1, &z1, &x2, &y2, &z2);
-	if (scan_ret != 0)
+	if (scan_ret == 6)
 	{
 		std::pair<Vertex, Vertex>	v;
 		v.first = (Vertex){x1, y1, z1};
@@ -45,7 +42,7 @@ void	ObjParser::parse_line(const char *line)
 		this->_lines.push_back(v);
 	}
 	else
-		std::cerr << "Error while reading a line" << std::endl; // Create class Exception
+		throw ParsingObjectException("Error while reading a line");
 }
 
 void	ObjParser::parse_materials_file(const std::string line)

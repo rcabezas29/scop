@@ -24,4 +24,17 @@ class ObjParser
 		void	parse_line(const char *line);
 		void	parse_materials_file(const std::string line);
 		Object	generate_object(void) const;
+
+		class ParsingObjectException : public std::exception {
+            private:
+                const std::string message;
+
+            public:
+                ParsingObjectException(const std::string e) : message(e) {}
+                virtual ~ParsingObjectException() throw() {}
+                virtual const char * what() const throw()
+                {
+                    return this->message.c_str();
+                }
+        };
 };

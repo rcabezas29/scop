@@ -13,10 +13,18 @@ int main(int argc, char **argv)
 {
 	if (argc != 2)
 	{
-		std::cout << "Invalid number of arguments" << std::endl;
+		std::cerr << "Invalid number of arguments" << std::endl;
 		exit(1);
 	}
 
-	Object obj = create_object_from_parser(argv[1]);
+	try
+	{
+		Object obj = create_object_from_parser(argv[1]);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
+
 	return 0;
 }

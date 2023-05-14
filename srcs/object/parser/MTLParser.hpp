@@ -21,5 +21,18 @@ class MTLParser
 		float	parse_specular_index(const char *line) const;
 		float	parse_transparency(const char *line) const;
 		float	parse_refraction_index(const char *line) const;
+
+		class ParsingMTLException : public std::exception {
+            private:
+                const std::string message;
+
+            public:
+                ParsingMTLException(const std::string e) : message(e) {}
+                virtual ~ParsingMTLException() throw() {}
+                virtual const char * what() const throw()
+                {
+                    return this->message.c_str();
+                }
+        };
 };
 

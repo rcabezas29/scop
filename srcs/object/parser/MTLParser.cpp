@@ -32,9 +32,7 @@ MTLParser::MTLParser(const std::string file_path)
 	}
 }
 
-MTLParser::~MTLParser()
-{
-}
+MTLParser::~MTLParser() {}
 
 Color	MTLParser::parse_ambient(const char *line) const
 {
@@ -42,10 +40,10 @@ Color	MTLParser::parse_ambient(const char *line) const
 	Color	color;
 
 	int	scan_ret = sscanf(line, "Ka %f %f %f", &r, &g, &b);
-	if (scan_ret != 0)
+	if (scan_ret == 3)
 		color = (Color){r, g, b};
 	else
-		std::cerr << "Error while reading an ambient color" << std::endl; // Create class Exception
+		throw ParsingMTLException("Error while reading an ambient color");
 	return color;
 }
 
@@ -55,10 +53,10 @@ Color	MTLParser::parse_diffuse(const char *line) const
 	Color	color;
 
 	int	scan_ret = sscanf(line, "Kd %f %f %f", &r, &g, &b);
-	if (scan_ret != 0)
+	if (scan_ret == 3)
 		color = (Color){r, g, b};
 	else
-		std::cerr << "Error while reading diffuse color" << std::endl; // Create class Exception
+		throw ParsingMTLException("Error while reading an diffuse color");
 	return color;
 }
 
@@ -68,10 +66,10 @@ Color	MTLParser::parse_specular_color(const char *line) const
 	Color	color;
 
 	int	scan_ret = sscanf(line, "Ks %f %f %f", &r, &g, &b);
-	if (scan_ret != 0)
+	if (scan_ret == 3)
 		color = (Color){r, g, b};
 	else
-		std::cerr << "Error while reading specular color" << std::endl; // Create class Exception
+		throw ParsingMTLException("Error while reading an specular color");
 	return color;
 }
 
@@ -80,8 +78,8 @@ float	MTLParser::parse_specular_index(const char *line) const
 	float	x;
 
 	int	scan_ret = sscanf(line, "Ns %f", &x);
-	if (scan_ret == 0)
-		std::cerr << "Error while reading specular index" << std::endl; // Create class Exception
+	if (scan_ret != 1)
+		throw ParsingMTLException("Error while reading specular index");
 	return x;
 }
 
@@ -90,8 +88,8 @@ float	MTLParser::parse_transparency(const char *line) const
 	float	x;
 
 	int	scan_ret = sscanf(line, "Tr %f", &x);
-	if (scan_ret == 0)
-		std::cerr << "Error while reading transparency" << std::endl; // Create class Exception
+	if (scan_ret != 1)
+		throw ParsingMTLException("Error while reading transparency");
 	return x;
 }
 
@@ -100,7 +98,7 @@ float	MTLParser::parse_refraction_index(const char *line) const
 	float	x;
 
 	int	scan_ret = sscanf(line, "Ni %f", &x);
-	if (scan_ret == 0)
-		std::cerr << "Error while reading specular index" << std::endl; // Create class Exception
+	if (scan_ret != 1)
+		throw ParsingMTLException("Error while reading specular index");
 	return x;
 }
