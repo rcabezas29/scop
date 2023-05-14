@@ -7,7 +7,7 @@
 struct Face
 {
 	Vertex		vertices[3];
-	Vertex		normals[3];
-	Vertex		textures[3];
-	Material	material;
+	// Vertex		normals[3];
+	// Vertex		textures[3];
+	// Material	material;
 };

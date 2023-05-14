@@ -10,7 +10,7 @@ class Object
 {
 	private:
 		std::vector<Vertex>	_vertices;
-		std::vector<Face>	_faces;
+		std::vector<Face*>	_faces;
 
 	public:
 		Object(void);
@@ -19,8 +19,8 @@ class Object
 		virtual	~Object(void);
 
 		void	set_vertices(const std::vector<Vertex>	&v);
-		void	set_faces(const std::vector<Face>	&f);
+		void	set_faces(const std::vector<Face*>	&f);
 
 		std::vector<Vertex>	get_vertices(void) const;
-		std::vector<Face>	get_faces(void) const;
+		std::vector<Face*>	get_faces(void) const;
 };

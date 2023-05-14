@@ -11,6 +11,8 @@ ObjParser::ObjParser(const std::string file_path)
 			this->parse_vertex(line.c_str());
 		else if (!strncmp("l ", line.c_str(), 2))
 			this->parse_line(line.c_str());
+		else if (!strncmp("f ", line.c_str(), 2))
+			this->parse_face(line.c_str());
 		else if (!strncmp("mtllib ", line.c_str(), 7))
 			this->parse_materials_file(line);
 	}
@@ -43,6 +45,25 @@ void	ObjParser::parse_line(const char *line)
 	}
 	else
 		throw ParsingObjectException("Error while reading a line");
+}
+
+void	ObjParser::parse_face(const char *line)
+{
+	int	a, b, c;
+
+	int	scan_ret = sscanf(line, "f %i %i %i", &a, &b, &c);
+	if (scan_ret == 3)
+	{
+		Face	*new_face = new Face();
+
+		new_face->vertices[0] = this->_vertices[a + 1];
+		new_face->vertices[1] = this->_vertices[b + 1];
+		new_face->vertices[2] = this->_vertices[c + 1];
+
+		this->_faces.push_back(new_face);
+	}
+	else
+		throw ParsingObjectException("Error while reading a face");
 }
 
 void	ObjParser::parse_materials_file(const std::string line)
