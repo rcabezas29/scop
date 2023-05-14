@@ -3,6 +3,7 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include <cstring>
 #include "structs/Material.hpp"
 
 class MTLParser

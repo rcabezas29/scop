@@ -20,4 +20,7 @@ class Object
 
 		void	set_vertices(const std::vector<Vertex>	&v);
 		void	set_faces(const std::vector<Face>	&f);
+
+		std::vector<Vertex>	get_vertices(void) const;
+		std::vector<Face>	get_faces(void) const;
 };
