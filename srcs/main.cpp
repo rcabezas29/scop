@@ -1,6 +1,7 @@
 #include <iostream>
 #include "Object.hpp"
 #include "ObjParser.hpp"
+#include "Renderer.hpp"
 
 Object	create_object_from_parser(const std::string file_path)
 {
@@ -20,6 +21,8 @@ int main(int argc, char **argv)
 	try
 	{
 		Object obj = create_object_from_parser(argv[1]);
+
+		Renderer	renderer;
 	}
 	catch (const std::exception& e)
 	{
