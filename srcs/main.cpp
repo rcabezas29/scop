@@ -23,6 +23,7 @@ int main(int argc, char **argv)
 		Object obj = create_object_from_parser(argv[1]);
 
 		Renderer	renderer;
+		// renderer.render();
 	}
 	catch (const std::exception& e)
 	{
