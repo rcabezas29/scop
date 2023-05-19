@@ -1,6 +1,12 @@
 # SCOP
 3D .obj renderer
 
+## Dependencies
+
+```bash
+sudo apt install xorg-dev
+sudo apt install libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules
+```
 ## Usage
 
 ```bash
