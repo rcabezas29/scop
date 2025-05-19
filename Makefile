@@ -20,11 +20,13 @@ $(BUILD_DIR)/$(TARGET): $(OBJS)
 $(BUILD_DIR)/%.cpp.o: %.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
-	cmake -S glfw -B build/glfw -D GLFW_USE_WAYLAND=1
 
 clean:
-	rm -r $(BUILD_DIR)
+	rm -rf $(OBJS)
 
-re: clean all
+fclean: clean
+	rm -rf $(BUILD_DIR)
 
-.PHONY: clean fclean re
+re: fclean all
+
+.PHONY: all clean fclean re

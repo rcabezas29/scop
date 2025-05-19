@@ -1,12 +1,8 @@
 #pragma once
 
-#include <GLFW/glfw3.h>
-#include <stdexcept>
-
 class Renderer
 {
 	private:
-		GLFWwindow* window;
 
 	public:
 		Renderer();
