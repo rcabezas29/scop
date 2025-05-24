@@ -15,6 +15,8 @@ CXXFLAGS := $(INC_FLAGS) -Wall -Wextra -Werror
 all: $(BUILD_DIR)/$(TARGET)
 
 $(BUILD_DIR)/$(TARGET): $(OBJS)
+	cmake -S glfw -B glfw/build
+	make -C glfw/build
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $@
 
 $(BUILD_DIR)/%.cpp.o: %.cpp
