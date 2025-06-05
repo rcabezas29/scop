@@ -56,10 +56,9 @@ Renderer::~Renderer(void)
 
 void	Renderer::render(const Object &obj)
 {
-	Shader			shader(SHADER_VERTEX, SHADER_FRAGMENT);
+	ProgramShader	shader;
 	unsigned int	VBO, VAO, EBO;
 
-	// Create and compile the vertex shader
 	shader.use();
 
 	std::vector<Vertex>		vertices_vec = obj.get_vertices();

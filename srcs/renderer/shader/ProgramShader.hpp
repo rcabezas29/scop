@@ -2,21 +2,16 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <iostream>
-#include <fstream>
-#include <sstream>
+#include <Shader.hpp>
 
-#define SHADER_DIR "/usr/share/scop/shaders/"
-#define SHADER_VERTEX SHADER_DIR "shader.vert"
-#define SHADER_FRAGMENT SHADER_DIR "shader.frag"
-
-class Shader
+class ProgramShader
 {
 	private:
 		GLuint _id;
 
 	public:
-		Shader(const char* vertexPath, const char* fragmentPath);
+		ProgramShader(void);
+		// ~ProgramShader();
 
 		void	use(void) const;
 		void	setBool(const std::string &name, bool value) const;

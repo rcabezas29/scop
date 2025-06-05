@@ -5,7 +5,7 @@
 #include <cmath>
 #include <iostream>
 #include <Object.hpp>
-#include <Shader.hpp>
+#include <ProgramShader.hpp>
 
 class Renderer
 {
