@@ -73,17 +73,17 @@ void	Renderer::render(const Object &obj)
 	}
 
 	// unsigned int VBO, VAO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
-    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    glBindVertexArray(VAO);
+	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+	glBindVertexArray(VAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices_vec.size() * 3, vertices_vec.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices_vec.size() * 3, vertices_vec.data(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices_vec.size(), indices_vec.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices_vec.size(), indices_vec.data(), GL_STATIC_DRAW);
 
 	// Now set the vertex attributes pointers
 	// The glVertexAttribPointer function is used to define an array of generic vertex attributes.
@@ -98,15 +98,15 @@ void	Renderer::render(const Object &obj)
 	// 3 is the size of the vertex attribute (vec3 = 3 floats), GL_FLOAT is the data type of the vertex attribute,
 	// GL_FALSE means that the data should not be normalized, and the last parameter is the stride and offset.
 	// In this case, the stride is 3 * sizeof(float) because each vertex consists of 3 floats (x, y, z),
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+	
+	// note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+	glBindBuffer(GL_ARRAY_BUFFER, 0); 
 
-    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-    glBindBuffer(GL_ARRAY_BUFFER, 0); 
-
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    glBindVertexArray(0);
+	// You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
+	// VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+	glBindVertexArray(0);
 
 	while (!glfwWindowShouldClose(this->_window))
 	{
@@ -115,23 +115,25 @@ void	Renderer::render(const Object &obj)
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glUseProgram(shader.getID());
 		glBindVertexArray(VAO);
 
-		double  timeValue = glfwGetTime();
-		float greenValue = static_cast<float>(sin(timeValue) / 2.0 + 0.5);
-		int vertexColorLocation = glGetUniformLocation(shader.getID(), "color");
-		glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+		double 	timeValue = glfwGetTime();
+		float	greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+		float	redValue = (cos(timeValue) / 2.0f) + 0.5f;
+		float	blueValue = (sin(timeValue + 3.14f) / 2.0f) + 0.5f;
+
+		int		vertexColorLocation = glGetUniformLocation(shader.getID(), "color");
+		glUniform4f(vertexColorLocation, redValue, greenValue, blueValue, 1.0f);
 
 		// glDrawArrays(GL_TRIANGLES, 0, obj.get_faces().size() * 3); // Assuming each vertex has 3 components (x, y, z)
-		glDrawElements(GL_TRIANGLES, obj.get_faces().size() * 3, GL_UNSIGNED_INT, 0); // Draw the triangles using the indices
+		glDrawElements(GL_TRIANGLES, obj.get_faces().size() * 6, GL_UNSIGNED_INT, 0); // Draw the triangles using the indices
 
 		glfwSwapBuffers(this->_window);
 		glfwPollEvents();
 	}
 
 	glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
-    glDeleteProgram(shader.getID());
+	glDeleteProgram(shader.getID());
 }
