@@ -2,11 +2,15 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <cmath>
 #include <iostream>
+#include <Object.hpp>
+#include <Shader.hpp>
 
 class Renderer
 {
 	private:
+		GLFWwindow	*_window;
 
 	public:
 		Renderer();
@@ -14,5 +18,5 @@ class Renderer
 		Renderer	&operator=(const Renderer &op);
 		~Renderer(void);
 
-		void	render();
+		void	render(const Object &obj);
 };

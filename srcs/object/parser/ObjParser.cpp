@@ -56,9 +56,12 @@ void	ObjParser::parse_face(const char *line)
 	{
 		Face	*new_face = new Face();
 
-		new_face->vertices[0] = this->_vertices[a + 1];
-		new_face->vertices[1] = this->_vertices[b + 1];
-		new_face->vertices[2] = this->_vertices[c + 1];
+		new_face->vertices[0] = this->_vertices[a - 1];
+		new_face->vertices[1] = this->_vertices[b - 1];
+		new_face->vertices[2] = this->_vertices[c - 1];
+		new_face->indices[0] = a;
+		new_face->indices[1] = b;
+		new_face->indices[2] = c;
 
 		this->_faces.push_back(new_face);
 	}

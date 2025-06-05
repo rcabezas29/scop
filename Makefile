@@ -1,5 +1,7 @@
 TARGET := scop
 
+SHARE_DIR := /usr/share/scop
+
 BUILD_DIR := ./build
 SRC_DIRS := ./srcs
 
@@ -18,6 +20,8 @@ $(BUILD_DIR)/$(TARGET): $(OBJS)
 	cmake -S glfw -B glfw/build
 	make -C glfw/build
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ -l GL -l glfw -ldl -lm
+	mkdir -p $(SHARE_DIR)
+	cp -r shaders $(SHARE_DIR)
 
 $(BUILD_DIR)/%.cpp.o: %.cpp
 	mkdir -p $(dir $@)
@@ -32,6 +36,7 @@ clean:
 
 fclean: clean
 	rm -rf $(BUILD_DIR)
+	rm -rf $(SHARE_DIR)
 
 re: fclean all
 
