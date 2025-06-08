@@ -6,7 +6,7 @@
 #include <fstream>
 #include <sstream>
 
-#define SHADER_DIR "/usr/share/scop/shaders/"
+#define SHADER_DIR "/tmp/scop/shaders/"
 #define SHADER_VERTEX SHADER_DIR "shader.vert"
 #define SHADER_FRAGMENT SHADER_DIR "shader.frag"
 

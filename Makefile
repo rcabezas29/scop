@@ -1,6 +1,6 @@
 TARGET := scop
 
-SHARE_DIR := /usr/share/scop
+SHARE_DIR := /tmp/scop
 
 BUILD_DIR := ./build
 SRC_DIRS := ./srcs

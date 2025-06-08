@@ -9,6 +9,8 @@ ObjParser::ObjParser(const std::string file_path)
 	{
 		if (!strncmp("v ", line.c_str(), 2))
 			this->parse_vertex(line.c_str());
+		else if (!strncmp("vt ", line.c_str(), 3))
+			this->parse_texture_vertices(line.c_str());
 		else if (!strncmp("l ", line.c_str(), 2))
 			this->parse_line(line.c_str());
 		else if (!strncmp("f ", line.c_str(), 2))
@@ -31,6 +33,17 @@ void	ObjParser::parse_vertex(const char *line)
 		throw ParsingObjectException("Error while reading a vertex");
 }
 
+void	ObjParser::parse_texture_vertices(const char *line)
+{
+	float	x, y, z;
+
+	int	scan_ret = sscanf(line, "vt %f %f %f", &x, &y, &z);
+	if (scan_ret == 3)
+		this->_texture_vertices.push_back((Vertex){x, y, z});
+	else
+		throw ParsingObjectException("Error while reading a vertex");
+}
+
 void	ObjParser::parse_line(const char *line)
 {
 	float	x1, y1, z1, x2, y2, z2;
@@ -49,9 +62,10 @@ void	ObjParser::parse_line(const char *line)
 
 void	ObjParser::parse_face(const char *line)
 {
-	int	a, b, c;
+	int	a, b, c, d;
 
-	int	scan_ret = sscanf(line, "f %i %i %i", &a, &b, &c);
+	int	scan_ret = sscanf(line, "f %i %i %i %i", &a, &b, &c, &d);
+	std::cout << "Returned: " << scan_ret << std::endl;
 	if (scan_ret == 3)
 	{
 		Face	*new_face = new Face();
@@ -62,6 +76,28 @@ void	ObjParser::parse_face(const char *line)
 		new_face->indices[0] = a;
 		new_face->indices[1] = b;
 		new_face->indices[2] = c;
+
+		this->_faces.push_back(new_face);
+	}
+	else if (scan_ret == 4)
+	{
+		Face	*new_face = new Face();
+
+		new_face->vertices[0] = this->_vertices[a - 1];
+		new_face->vertices[1] = this->_vertices[b - 1];
+		new_face->vertices[2] = this->_vertices[c - 1];
+		new_face->indices[0] = a;
+		new_face->indices[1] = b;
+		new_face->indices[2] = c;
+
+		this->_faces.push_back(new_face);
+		new_face = new Face();
+		new_face->vertices[0] = this->_vertices[a - 1];
+		new_face->vertices[1] = this->_vertices[c - 1];
+		new_face->vertices[2] = this->_vertices[d - 1];
+		new_face->indices[0] = a;
+		new_face->indices[1] = c;
+		new_face->indices[2] = d;
 
 		this->_faces.push_back(new_face);
 	}

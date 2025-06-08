@@ -13,6 +13,7 @@ class ObjParser
 	private:
 		std::vector<Face*>						_faces;
 		std::vector<Vertex>						_vertices;
+		std::vector<Vertex>						_texture_vertices;
 		std::vector<std::pair<Vertex, Vertex> >	_lines;
 		std::vector<Material>					_materials;
 
@@ -21,6 +22,7 @@ class ObjParser
 		virtual ~ObjParser(void);
 
 		void	parse_vertex(const char *line);
+		void	parse_texture_vertices(const char *line);
 		void	parse_line(const char *line);
 		void	parse_face(const char *line);
 		void	parse_materials_file(const std::string line);
