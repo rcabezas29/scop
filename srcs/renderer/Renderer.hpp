@@ -11,6 +11,7 @@
 
 #include <Object.hpp>
 #include <ProgramShader.hpp>
+#include <Texture.hpp>
 
 #define TEXTURE_PATH "/tmp/scop/textures/wall.jpg"
 
