@@ -22,6 +22,7 @@ $(BUILD_DIR)/$(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ -l GL -l glfw -ldl -lm
 	mkdir -p $(SHARE_DIR)
 	cp -r shaders $(SHARE_DIR)
+	cp -r resources/textures $(SHARE_DIR)
 
 $(BUILD_DIR)/%.cpp.o: %.cpp
 	mkdir -p $(dir $@)

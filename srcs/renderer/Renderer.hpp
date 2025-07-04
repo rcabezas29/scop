@@ -4,8 +4,11 @@
 #include <GLFW/glfw3.h>
 #include <cmath>
 #include <iostream>
+
 #include <Object.hpp>
 #include <ProgramShader.hpp>
+
+#define TEXTURE_PATH "/tmp/scop/textures/wall.jpg"
 
 class Renderer
 {

@@ -1,14 +1,16 @@
 #include <Renderer.hpp>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
-void	framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
 	(void)window;
 	glViewport(0, 0, width, height);
 }
 
-void	processInput(GLFWwindow *window)
+void processInput(GLFWwindow *window)
 {
-	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 }
 
@@ -24,14 +26,14 @@ Renderer::Renderer()
 	{
 		std::cerr << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
-		return ;
+		return;
 	}
 	glfwMakeContextCurrent(this->_window);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cerr << "Failed to initialize GLAD" << std::endl;
-		return ;
+		return;
 	}
 	glViewport(0, 0, 800, 600);
 	glfwSetFramebufferSizeCallback(this->_window, framebuffer_size_callback);
@@ -42,7 +44,7 @@ Renderer::Renderer(const Renderer &copy)
 	(void)copy;
 }
 
-Renderer	&Renderer::operator=(const Renderer &op)
+Renderer &Renderer::operator=(const Renderer &op)
 {
 	if (this == &op)
 		return *this;
@@ -54,22 +56,39 @@ Renderer::~Renderer(void)
 	glfwTerminate();
 }
 
-void	Renderer::render(const Object &obj)
+void Renderer::render(const Object &obj)
 {
-	ProgramShader	shader;
-	unsigned int	VBO, VAO, EBO;
+	ProgramShader shader;
+	unsigned int VBO, VAO, EBO;
 
-	shader.use();
+	// shader.use();
 
-	std::vector<Vertex>		vertices_vec = obj.get_vertices();
-	std::vector<int>		indices_vec;
+	std::vector<float> vertices_data;
+	std::vector<unsigned int> indices_vec;
+	float texCoord[] = {
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+		0.0f, 0.0f,
+		0.0f, 1.0f};
+
 	for (const Face *face : obj.get_faces())
-	{
 		for (const int &index : face->indices)
-		{
 			indices_vec.push_back(index - 1); // Get the index of the vertex in the vertices vector
-			// TODO: Add texture Vertex
-		}
+	srand(time(NULL));
+	int i = 0;
+	for (const Vertex &vertex : obj.get_vertices())
+	{
+		vertices_data.push_back(vertex.x);
+		vertices_data.push_back(vertex.y);
+		vertices_data.push_back(vertex.z);
+		// Assuming the color is white for now, you can modify this to use actual colors if needed
+
+		vertices_data.push_back(((double)rand()) / RAND_MAX); // Red
+		vertices_data.push_back(((double)rand()) / RAND_MAX); // Green
+		vertices_data.push_back(((double)rand()) / RAND_MAX); // Blue
+		// Assuming texture coordinates are (0.0f, 0.0f) for now, you can modify this to use actual texture coordinates if needed
+		vertices_data.push_back(texCoord[i++]);
+		vertices_data.push_back(texCoord[i++]);
 	}
 
 	// unsigned int VBO, VAO;
@@ -80,7 +99,7 @@ void	Renderer::render(const Object &obj)
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices_vec.size() * 3, vertices_vec.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices_data.size(), vertices_data.data(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices_vec.size(), indices_vec.data(), GL_STATIC_DRAW);
@@ -98,15 +117,40 @@ void	Renderer::render(const Object &obj)
 	// 3 is the size of the vertex attribute (vec3 = 3 floats), GL_FLOAT is the data type of the vertex attribute,
 	// GL_FALSE means that the data should not be normalized, and the last parameter is the stride and offset.
 	// In this case, the stride is 3 * sizeof(float) because each vertex consists of 3 floats (x, y, z),
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-	
-	// note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-	glBindBuffer(GL_ARRAY_BUFFER, 0); 
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+	glEnableVertexAttribArray(0);
+	// color attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	// texture coord attribute
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
-	// You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-	// VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-	glBindVertexArray(0);
+	// load and create a texture
+	// -------------------------
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+	// set the texture wrapping parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set texture wrapping to GL_REPEAT (default wrapping method)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// set texture filtering parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// load image, create texture and generate mipmaps
+	int width, height, nrChannels;
+	// The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+	unsigned char *data = stbi_load(TEXTURE_PATH, &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data);
 
 	while (!glfwWindowShouldClose(this->_window))
 	{
@@ -115,18 +159,11 @@ void	Renderer::render(const Object &obj)
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		glBindTexture(GL_TEXTURE_2D, texture);
+
+		shader.use();
 		glBindVertexArray(VAO);
-
-		double 	timeValue = glfwGetTime();
-		float	greenValue = (sin(timeValue) / 2.0f) + 0.5f;
-		float	redValue = (cos(timeValue) / 2.0f) + 0.5f;
-		float	blueValue = (sin(timeValue + 3.14f) / 2.0f) + 0.5f;
-
-		int		vertexColorLocation = glGetUniformLocation(shader.getID(), "color");
-		glUniform4f(vertexColorLocation, redValue, greenValue, blueValue, 1.0f);
-
-		// glDrawArrays(GL_TRIANGLES, 0, obj.get_faces().size() * 3); // Assuming each vertex has 3 components (x, y, z)
-		glDrawElements(GL_TRIANGLES, obj.get_faces().size() * 6, GL_UNSIGNED_INT, 0); // Draw the triangles using the indices
+		glDrawElements(GL_TRIANGLES, obj.get_faces().size() * 3, GL_UNSIGNED_INT, 0); // Draw the triangles using the indices
 
 		glfwSwapBuffers(this->_window);
 		glfwPollEvents();

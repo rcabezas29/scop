@@ -65,7 +65,6 @@ void	ObjParser::parse_face(const char *line)
 	int	a, b, c, d;
 
 	int	scan_ret = sscanf(line, "f %i %i %i %i", &a, &b, &c, &d);
-	std::cout << "Returned: " << scan_ret << std::endl;
 	if (scan_ret == 3)
 	{
 		Face	*new_face = new Face();

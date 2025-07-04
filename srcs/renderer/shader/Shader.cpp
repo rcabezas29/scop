@@ -8,7 +8,7 @@ Shader::Shader(const char* shaderPath, const GLenum shaderType)
 	char			infoLog[512];
 	int				success;
 	// ensure ifstream objects can throw exceptions:
-	file.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+	file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 	try
 	{
 		std::stringstream	shaderStream;
