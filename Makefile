@@ -8,7 +8,7 @@ SRC_DIRS := ./srcs
 SRCS := $(shell find $(SRC_DIRS) -name '*.cpp') glad/src/glad.c
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 
-INC_DIRS := $(shell find $(SRC_DIRS) -type d) glfw/build/include glad/include
+INC_DIRS := $(shell find $(SRC_DIRS) -type d) glfw/build/include glad/include glm
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CXX := g++

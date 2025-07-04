@@ -2,6 +2,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+unsigned int SCR_WIDTH = 800;
+unsigned int SCR_HEIGHT = 600;
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
 	(void)window;
@@ -61,8 +64,6 @@ void Renderer::render(const Object &obj)
 	ProgramShader shader;
 	unsigned int VBO, VAO, EBO;
 
-	// shader.use();
-
 	std::vector<float> vertices_data;
 	std::vector<unsigned int> indices_vec;
 	float texCoord[] = {
@@ -91,7 +92,6 @@ void Renderer::render(const Object &obj)
 		vertices_data.push_back(texCoord[i++]);
 	}
 
-	// unsigned int VBO, VAO;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
@@ -104,25 +104,12 @@ void Renderer::render(const Object &obj)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices_vec.size(), indices_vec.data(), GL_STATIC_DRAW);
 
-	// Now set the vertex attributes pointers
-	// The glVertexAttribPointer function is used to define an array of generic vertex attributes.
-	// The first parameter is the index of the vertex attribute (0 in this case).
-	// The second parameter is the size of the vertex attribute (3 for vec3).
-	// The third parameter is the data type of the vertex attribute (GL_FLOAT for float).
-	// The fourth parameter specifies whether fixed-point data values should be normalized (GL_FALSE means no normalization).
-	// The fifth parameter specifies the stride (the byte offset between consecutive attributes).
-	// The last parameter specifies the offset of the first component of the first attribute in the array.
-	// specify the location and data format of the array of generic vertex attributes at index
-	// 0, which is the position attribute in the vertex shader.
-	// 3 is the size of the vertex attribute (vec3 = 3 floats), GL_FLOAT is the data type of the vertex attribute,
-	// GL_FALSE means that the data should not be normalized, and the last parameter is the stride and offset.
-	// In this case, the stride is 3 * sizeof(float) because each vertex consists of 3 floats (x, y, z),
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
 	glEnableVertexAttribArray(0);
-	// color attribute
+
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-	// texture coord attribute
+
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
@@ -135,11 +122,10 @@ void Renderer::render(const Object &obj)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set texture wrapping to GL_REPEAT (default wrapping method)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	// set texture filtering parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	// load image, create texture and generate mipmaps
 	int width, height, nrChannels;
-	// The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
 	unsigned char *data = stbi_load(TEXTURE_PATH, &width, &height, &nrChannels, 0);
 	if (data)
 	{
@@ -148,7 +134,7 @@ void Renderer::render(const Object &obj)
 	}
 	else
 	{
-		std::cout << "Failed to load texture" << std::endl;
+		std::cerr << "Failed to load texture" << std::endl;
 	}
 	stbi_image_free(data);
 
@@ -159,9 +145,29 @@ void Renderer::render(const Object &obj)
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		// create transformations
+		glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+		// transform = glm::translate(transform, glm::vec3(-0.5f, -0.5f, 0.0f));
+		transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(1.0f, 1.0f, 1.0f));
+
 		glBindTexture(GL_TEXTURE_2D, texture);
 
 		shader.use();
+		glm::mat4 model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+        glm::mat4 view          = glm::mat4(1.0f);
+        glm::mat4 projection    = glm::mat4(1.0f);
+        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 1.0f, 1.0f));
+        view  = glm::translate(view, glm::vec3(0.0f, 0.0f, -10.0f));
+        projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        // retrieve the matrix uniform locations
+        unsigned int modelLoc = glGetUniformLocation(shader.getID(), "model");
+        unsigned int viewLoc  = glGetUniformLocation(shader.getID(), "view");
+        // pass them to the shaders (3 different ways)
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+        // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+        shader.setMat4("projection", projection);
+		
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, obj.get_faces().size() * 3, GL_UNSIGNED_INT, 0); // Draw the triangles using the indices
 

@@ -5,3 +5,7 @@
 	path = srcs/matrix
 	url = git@github.com:rcabezas29/matrix.git
 	branch = RT
+[submodule "glm"]
+	path = glm
+	url = git@github.com:g-truc/glm.git
+	branch = 0.9.8
