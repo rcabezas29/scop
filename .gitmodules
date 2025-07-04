@@ -1,3 +1,7 @@
 [submodule "glfw"]
 	path = glfw
 	url = git@github.com:glfw/glfw.git
+[submodule "srcs/matrix"]
+	path = srcs/matrix
+	url = git@github.com:rcabezas29/matrix.git
+	branch = RT
