@@ -19,6 +19,7 @@ class Renderer
 {
 	private:
 		GLFWwindow	*_window;
+		bool		_useTexture;
 
 	public:
 		Renderer();
@@ -27,4 +28,5 @@ class Renderer
 		~Renderer(void);
 
 		void	render(const Object &obj);
+		void	processInput(GLFWwindow *window);
 };

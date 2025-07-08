@@ -9,13 +9,24 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
-void processInput(GLFWwindow *window)
+void Renderer::processInput(GLFWwindow *window)
 {
+	static bool keyPressed = false;
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+	if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+	{
+		if (!keyPressed)
+		{
+			keyPressed = true;
+			this->_useTexture = !this->_useTexture;
+		}
+	}
+	else
+		keyPressed = false;
 }
 
-Renderer::Renderer()
+Renderer::Renderer() : _useTexture(true)
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -119,7 +130,7 @@ void Renderer::render(const Object &obj)
 	
 	while (!glfwWindowShouldClose(this->_window))
 	{
-		processInput(this->_window);
+		this->processInput(this->_window);
 		
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -133,12 +144,14 @@ void Renderer::render(const Object &obj)
 
 		glBindTexture(GL_TEXTURE_2D, texture.get_id());
 
+		shader.setInt("aIsTexture", this->_useTexture ? 1 : 0);
 		shader.use();
+		
 		glm::mat4 model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
         glm::mat4 view          = glm::mat4(1.0f);
         glm::mat4 projection    = glm::mat4(1.0f);
-        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 1.0f, 1.0f));
-        view  = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
+        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+        view  = glm::translate(view, glm::vec3(0.0f, 0.0f, -10.0f));
         projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         // retrieve the matrix uniform locations
         unsigned int modelLoc = glGetUniformLocation(shader.getID(), "model");
