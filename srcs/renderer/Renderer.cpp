@@ -87,8 +87,10 @@ void Renderer::render(const Object &obj)
 		vertices_data.push_back(((double)rand()) / RAND_MAX); // Green
 		vertices_data.push_back(((double)rand()) / RAND_MAX); // Blue
 		// Assuming texture coordinates are (0.0f, 0.0f) for now, you can modify this to use actual texture coordinates if needed
-		vertices_data.push_back(texCoord[i++]);
-		vertices_data.push_back(texCoord[i++]);
+		vertices_data.push_back(texCoord[i % 8]); // U coordinate
+		++i;
+		vertices_data.push_back(texCoord[i % 8]); // V coordinate
+		++i;
 	}
 
 	glGenVertexArrays(1, &VAO);
@@ -112,13 +114,18 @@ void Renderer::render(const Object &obj)
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
+	
 	while (!glfwWindowShouldClose(this->_window))
 	{
 		processInput(this->_window);
-
+		
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-
+		
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glDepthFunc(GL_LESS);
 		// create transformations
 		glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
 		// transform = glm::translate(transform, glm::vec3(-0.5f, -0.5f, 0.0f));
