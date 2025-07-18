@@ -9,6 +9,17 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
+void	Renderer::scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
+{
+	(void)xoffset;	
+	// Get the renderer instance from the window user pointer
+	Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+	if (renderer)
+		renderer->_camera.processScroll(static_cast<float>(yoffset));
+
+	// This function is not used in the current implementation, but can be used to handle scroll input.
+}
+
 void Renderer::processInput(GLFWwindow *window)
 {
 	static bool keyPressed = false;
@@ -49,6 +60,9 @@ Renderer::Renderer() : _useTexture(true)
 	}
 	glViewport(0, 0, 800, 600);
 	glfwSetFramebufferSizeCallback(this->_window, framebuffer_size_callback);
+	glfwSetWindowUserPointer(this->_window, this);
+	glfwSetScrollCallback(this->_window, Renderer::scroll_callback);
+	this->_object_centroid = glm::vec3(0.0f, 0.0f, 0.0f);
 }
 
 Renderer::Renderer(const Renderer &copy)
@@ -72,6 +86,8 @@ void Renderer::render(const Object &obj)
 {
 	ProgramShader	shader;
 	Texture			texture;
+	glm::mat4		model(1.0f), view(1.0f), projection(1.0f);
+	float			rotationAngle = 0.0f;
 	unsigned int	VBO, VAO, EBO;
 
 	std::vector<float> vertices_data;
@@ -92,12 +108,11 @@ void Renderer::render(const Object &obj)
 		vertices_data.push_back(vertex.x);
 		vertices_data.push_back(vertex.y);
 		vertices_data.push_back(vertex.z);
-		// Assuming the color is white for now, you can modify this to use actual colors if needed
 
 		vertices_data.push_back(((double)rand()) / RAND_MAX); // Red
 		vertices_data.push_back(((double)rand()) / RAND_MAX); // Green
 		vertices_data.push_back(((double)rand()) / RAND_MAX); // Blue
-		// Assuming texture coordinates are (0.0f, 0.0f) for now, you can modify this to use actual texture coordinates if needed
+
 		vertices_data.push_back(texCoord[i % 8]); // U coordinate
 		++i;
 		vertices_data.push_back(texCoord[i % 8]); // V coordinate
@@ -127,6 +142,18 @@ void Renderer::render(const Object &obj)
 
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
+
+	std::vector<Vertex>		vertices = obj.get_vertices();
+	for (const Vertex& vertex : vertices)
+	{
+		this->_object_centroid.x += vertex.x;
+		this->_object_centroid.y += vertex.y;
+		this->_object_centroid.z += vertex.z;
+	}
+	if (!vertices.empty())
+		this->_object_centroid /= static_cast<float>(vertices.size());
+
+	projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 	
 	while (!glfwWindowShouldClose(this->_window))
 	{
@@ -137,31 +164,25 @@ void Renderer::render(const Object &obj)
 		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDepthFunc(GL_LESS);
-		// create transformations
-		glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-		// transform = glm::translate(transform, glm::vec3(-0.5f, -0.5f, 0.0f));
-		transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(1.0f, 1.0f, 1.0f));
-
+		
 		glBindTexture(GL_TEXTURE_2D, texture.get_id());
-
+		
 		shader.setInt("aIsTexture", this->_useTexture ? 1 : 0);
 		shader.use();
 		
-		glm::mat4 model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-        glm::mat4 view          = glm::mat4(1.0f);
-        glm::mat4 projection    = glm::mat4(1.0f);
-        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-        view  = glm::translate(view, glm::vec3(0.0f, 0.0f, -10.0f));
-        projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        // retrieve the matrix uniform locations
-        unsigned int modelLoc = glGetUniformLocation(shader.getID(), "model");
-        unsigned int viewLoc  = glGetUniformLocation(shader.getID(), "view");
-        // pass them to the shaders (3 different ways)
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-        // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-        shader.setMat4("projection", projection);
-		
+		rotationAngle += 0.005f;
+		view = this->_camera.getViewMatrix();
+		model = glm::mat4(1.0f);
+		model = glm::rotate(model, rotationAngle, glm::vec3(0.0f, 1.0f, 0.0f));  // Rotate around Y axis
+		model = glm::translate(model, -this->_object_centroid);  // Center the object at origin
+
+		unsigned int modelLoc = glGetUniformLocation(shader.getID(), "model");
+		unsigned int viewLoc = glGetUniformLocation(shader.getID(), "view");
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+		shader.setMat4("projection", projection);
+
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, obj.get_faces().size() * 3, GL_UNSIGNED_INT, 0); // Draw the triangles using the indices
 
