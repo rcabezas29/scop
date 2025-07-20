@@ -8,13 +8,13 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 
 void	Renderer::scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 {
-	(void)xoffset;	
-	Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+	(void)xoffset;
+	Renderer *renderer = static_cast<Renderer *>(glfwGetWindowUserPointer(window));
 	if (renderer)
 		renderer->_camera.processScroll(static_cast<float>(yoffset));
 }
 
-void Renderer::processInput(GLFWwindow *window)
+void	Renderer::process_input(GLFWwindow *window)
 {
 	static bool keyPressed = false;
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -31,160 +31,269 @@ void Renderer::processInput(GLFWwindow *window)
 		keyPressed = false;
 }
 
-Renderer::Renderer() : _useTexture(true)
+Renderer::Renderer(void) : _window(nullptr), _useTexture(true), _rotationAngle(0.0f) {}
+
+Renderer::~Renderer(void)
 {
-	glfwInit();
+	cleanup_render_data();
+	if (this->_window)
+		glfwTerminate();
+}
+
+bool	Renderer::initialize(void)
+{
+	if (!initialize_OpenGL())
+	{
+		std::cerr << "Failed to initialize OpenGL" << std::endl;
+		return false;
+	}
+	setup_window();
+	setup_callbacks();
+	try
+	{
+		this->_shader = std::make_unique<ProgramShader>();
+		this->_texture = std::make_unique<Texture>();
+	}
+	catch (const std::exception &e)
+	{
+		std::cerr << "Failed to initialize shader or texture: " << e.what() << std::endl;
+		return false;
+	}
+	return true;
+}
+
+bool	Renderer::initialize_OpenGL(void)
+{
+	if (!glfwInit())
+	{
+		std::cerr << "Failed to initialize GLFW" << std::endl;
+		return false;
+	}
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	return true;
+}
 
-	this->_window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
-	if (this->_window == NULL)
+void	Renderer::setup_window(void)
+{
+	this->_window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "SCOP - 3D Object Viewer", NULL, NULL);
+	if (!this->_window)
 	{
 		std::cerr << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
-		return;
+		return ;
 	}
 	glfwMakeContextCurrent(this->_window);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cerr << "Failed to initialize GLAD" << std::endl;
-		return ;
+		return;
 	}
+
 	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
+}
+
+void Renderer::setup_callbacks(void)
+{
 	glfwSetFramebufferSizeCallback(this->_window, framebuffer_size_callback);
 	glfwSetWindowUserPointer(this->_window, this);
 	glfwSetScrollCallback(this->_window, Renderer::scroll_callback);
-	this->_object_centroid = glm::vec3(0.0f, 0.0f, 0.0f);
 }
 
-Renderer::Renderer(const Renderer &copy)
+void Renderer::prepare_object_data(const Object &obj)
 {
-	(void)copy;
+	if (this->_renderData.isInitialized)
+		cleanup_render_data();
+
+	std::vector<float> vertices;
+	std::vector<unsigned int> indices;
+
+	generate_vertex_data(obj, vertices, indices);
+	calculate_centroid(obj);
+	setup_buffers(vertices, indices);
+	setup_vertex_attributes();
+
+	this->_renderData.indexCount = indices.size();
+	this->_renderData.isInitialized = true;
 }
 
-Renderer &Renderer::operator=(const Renderer &op)
+void Renderer::generate_vertex_data(const Object &obj, std::vector<float> &vertices, std::vector<unsigned int> &indices)
 {
-	if (this == &op)
-		return *this;
-	return *this;
+	// Generate indices
+	for (const Face *face : obj.get_faces())
+		for (const int &index : face->indices)
+			indices.push_back(index - 1); // Convert to 0-based indexing
+
+	// Find max Y and Z for texture coordinate normalization
+	float max_y = 0.0f, max_z = 0.0f;
+	for (const Vertex &vertex : obj.get_vertices())
+	{
+		if (vertex.y > max_y) max_y = vertex.y;
+		if (vertex.z > max_z) max_z = vertex.z;
+	}
+
+	// Avoid division by zero
+	if (max_y == 0.0f) max_y = 1.0f;
+	if (max_z == 0.0f) max_z = 1.0f;
+
+	// Generate vertex data with positions, colors, and texture coordinates
+	srand(time(NULL));
+	for (const Vertex &vertex : obj.get_vertices())
+	{
+		// Position
+		vertices.push_back(vertex.x);
+		vertices.push_back(vertex.y);
+		vertices.push_back(vertex.z);
+
+		// Random color
+		vertices.push_back(static_cast<float>(rand()) / RAND_MAX);
+		vertices.push_back(static_cast<float>(rand()) / RAND_MAX);
+		vertices.push_back(static_cast<float>(rand()) / RAND_MAX);
+
+		// Texture coordinates
+		vertices.push_back(vertex.y / max_y);
+		vertices.push_back(vertex.z / max_z);
+	}
 }
 
-Renderer::~Renderer(void)
+void Renderer::calculate_centroid(const Object &obj)
 {
-	glfwTerminate();
+	this->_renderData.centroid = glm::vec3(0.0f);
+	const std::vector<Vertex> &vertices = obj.get_vertices();
+	
+	if (!vertices.empty())
+	{
+		for (const Vertex &vertex : vertices)
+		{
+			this->_renderData.centroid.x += vertex.x;
+			this->_renderData.centroid.y += vertex.y;
+			this->_renderData.centroid.z += vertex.z;
+		}
+		this->_renderData.centroid /= static_cast<float>(vertices.size());
+	}
+}
+
+void Renderer::setup_buffers(const std::vector<float> &vertices, const std::vector<unsigned int> &indices)
+{
+	glGenVertexArrays(1, &this->_renderData.VAO);
+	glGenBuffers(1, &this->_renderData.VBO);
+	glGenBuffers(1, &this->_renderData.EBO);
+
+	glBindVertexArray(this->_renderData.VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->_renderData.VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_renderData.EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+}
+
+void Renderer::setup_vertex_attributes()
+{
+	// Position attribute (location = 0)
+	glVertexAttribPointer(0, POSITION_COMPONENTS, GL_FLOAT, GL_FALSE, VERTEX_STRIDE, (void*)POSITION_OFFSET);
+	glEnableVertexAttribArray(0);
+
+	// Color attribute (location = 1)
+	glVertexAttribPointer(1, COLOR_COMPONENTS, GL_FLOAT, GL_FALSE, VERTEX_STRIDE, (void*)COLOR_OFFSET);
+	glEnableVertexAttribArray(1);
+
+	// Texture coordinate attribute (location = 2)
+	glVertexAttribPointer(2, TEXTURE_COMPONENTS, GL_FLOAT, GL_FALSE, VERTEX_STRIDE, (void*)TEXTURE_OFFSET);
+	glEnableVertexAttribArray(2);
 }
 
 void Renderer::render(const Object &obj)
 {
-	ProgramShader	shader;
-	Texture			texture;
-	glm::mat4		model(1.0f), view(1.0f), projection(1.0f);
-	float			rotationAngle = 0.0f;
-	unsigned int	VBO, VAO, EBO;
-
-	std::vector<float> vertices_data;
-	std::vector<unsigned int> indices_vec;
-
-	for (const Face *face : obj.get_faces())
-		for (const int &index : face->indices)
-			indices_vec.push_back(index - 1); // Get the index of the vertex in the vertices vector
-	srand(time(NULL));
-	float max_y = 0.0f, max_z = 0.0f;
-	for (const Vertex &vertex : obj.get_vertices())
+	if (!this->_window || !this->_shader || !this->_texture)
 	{
-		if (vertex.y > max_y)
-			max_y = vertex.y;
-		if (vertex.z > max_z)
-			max_z = vertex.z;
-	}
-	for (const Vertex &vertex : obj.get_vertices())
-	{
-		vertices_data.push_back(vertex.x);
-		vertices_data.push_back(vertex.y);
-		vertices_data.push_back(vertex.z);
-
-		vertices_data.push_back(((double)rand()) / RAND_MAX); // Red
-		vertices_data.push_back(((double)rand()) / RAND_MAX); // Green
-		vertices_data.push_back(((double)rand()) / RAND_MAX); // Blue
-
-		vertices_data.push_back(vertex.y / max_y); // U coordinate
-		vertices_data.push_back(vertex.z / max_z); // V coordinate
+		std::cerr << "Renderer not properly initialized" << std::endl;
+		return;
 	}
 
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-	glBindVertexArray(VAO);
+	// Prepare object data if not already done
+	if (!this->_renderData.isInitialized)
+		this->prepare_object_data(obj);
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices_data.size(), vertices_data.data(), GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices_vec.size(), indices_vec.data(), GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
-	glEnableVertexAttribArray(0);
-
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-
-	glEnable(GL_CULL_FACE);
-	glEnable(GL_DEPTH_TEST);
-
-	std::vector<Vertex>		vertices = obj.get_vertices();
-	for (const Vertex& vertex : vertices)
-	{
-		this->_object_centroid.x += vertex.x;
-		this->_object_centroid.y += vertex.y;
-		this->_object_centroid.z += vertex.z;
-	}
-	if (!vertices.empty())
-		this->_object_centroid /= static_cast<float>(vertices.size());
-
-	projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-	
+	// Main rendering loop
 	while (!glfwWindowShouldClose(this->_window))
 	{
-		this->processInput(this->_window);
-		
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glDepthFunc(GL_LESS);
-		
-		glBindTexture(GL_TEXTURE_2D, texture.get_id());
-		
-		shader.setInt("aIsTexture", this->_useTexture ? 1 : 0);
-		shader.use();
-		
-		rotationAngle += 0.005f;
-		view = this->_camera.getViewMatrix();
-		model = glm::mat4(1.0f);
-		model = glm::rotate(model, rotationAngle, glm::vec3(0.0f, 1.0f, 0.0f));  // Rotate around Y axis
-		model = glm::translate(model, -this->_object_centroid);  // Center the object at origin
-
-		unsigned int modelLoc = glGetUniformLocation(shader.getID(), "model");
-		unsigned int viewLoc = glGetUniformLocation(shader.getID(), "view");
-
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-		shader.setMat4("projection", projection);
-
-		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, obj.get_faces().size() * 3, GL_UNSIGNED_INT, 0); // Draw the triangles using the indices
+		this->process_input(this->_window);
+		this->draw_frame();
 
 		glfwSwapBuffers(this->_window);
 		glfwPollEvents();
 	}
+}
 
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
-	glDeleteProgram(shader.getID());
+void Renderer::draw_frame(void)
+{
+	// Clear the screen
+	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glDepthFunc(GL_LESS);
+
+	// Use shader and bind texture
+	this->_shader->use();
+	glBindTexture(GL_TEXTURE_2D, this->_texture->get_id());
+	this->_shader->setInt("aIsTexture", this->_useTexture ? 1 : 0);
+
+	// Update matrices
+	this->update_matrices();
+
+	// Draw the object
+	glBindVertexArray(this->_renderData.VAO);
+	glDrawElements(GL_TRIANGLES, this->_renderData.indexCount, GL_UNSIGNED_INT, 0);
+}
+
+void Renderer::update_matrices(void)
+{
+	// Update rotation
+	this->_rotationAngle += ROTATION_SPEED;
+
+	// Calculate matrices
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::rotate(model, this->_rotationAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::translate(model, -this->_renderData.centroid);
+
+	glm::mat4 view = this->_camera.getViewMatrix();
+
+	glm::mat4 projection = glm::perspective(
+		glm::radians(FOV_DEGREES), 
+		static_cast<float>(SCR_WIDTH) / static_cast<float>(SCR_HEIGHT), 
+		NEAR_PLANE, 
+		FAR_PLANE
+	);
+
+	// Set uniforms
+	unsigned int modelLoc = glGetUniformLocation(_shader->getID(), "model");
+	unsigned int viewLoc = glGetUniformLocation(_shader->getID(), "view");
+
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+	_shader->setMat4("projection", projection);
+}
+
+void Renderer::cleanup_render_data()
+{
+	if (this->_renderData.VAO != 0)
+	{
+		glDeleteVertexArrays(1, &this->_renderData.VAO);
+		this->_renderData.VAO = 0;
+	}
+	if (this->_renderData.VBO != 0)
+	{
+		glDeleteBuffers(1, &this->_renderData.VBO);
+		this->_renderData.VBO = 0;
+	}
+	if (this->_renderData.EBO != 0)
+	{
+		glDeleteBuffers(1, &this->_renderData.EBO);
+		this->_renderData.EBO = 0;
+	}
+	this->_renderData.isInitialized = false;
 }

@@ -23,11 +23,17 @@ int main(int argc, char **argv)
 		Object obj = create_object_from_parser(argv[1]);
 
 		Renderer	renderer;
+		if (!renderer.initialize())
+		{
+			std::cerr << "Failed to initialize renderer" << std::endl;
+			return 1;
+		}
 		renderer.render(obj);
 	}
 	catch (const std::exception& e)
 	{
 		std::cerr << e.what() << '\n';
+		return 1;
 	}
 
 	return 0;
