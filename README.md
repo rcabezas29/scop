@@ -60,10 +60,9 @@ make
 
 ## Examples
 
-![](./assets/cow.mp4)
-![](./assets/teapot.mp4)
-![](./assets/42.mp4)
-
+![](/assets/42.gif)
+![](/assets/teapot.gif)
+![](/assets/cow.gif)
 
 ## RESOURCES
 - https://en.wikipedia.org/wiki/Wavefront_.obj_file
