@@ -15,7 +15,7 @@ class ObjParser
 		std::vector<Vertex>						_vertices;
 		std::vector<Vertex>						_texture_vertices;
 		std::vector<std::pair<Vertex, Vertex> >	_lines;
-		std::vector<Material>					_materials;
+		std::map<std::string, Material>			_materials;
 
 	public:
 		ObjParser(const std::string file);
@@ -24,7 +24,7 @@ class ObjParser
 		void	parse_vertex(const char *line);
 		void	parse_texture_vertices(const char *line);
 		void	parse_line(const char *line);
-		void	parse_face(const char *line);
+		void	parse_face(const char *line, Material *material = nullptr);
 		void	parse_materials_file(const std::string line);
 		Object	generate_object(void) const;
 

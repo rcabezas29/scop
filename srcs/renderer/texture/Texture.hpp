@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-#define TEXTURE_PATH "/tmp/scop/textures/wall.jpg"
+#define TEXTURE_PATH "/tmp/scop/textures/container.jpg"
 
 class Texture
 {

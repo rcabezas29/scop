@@ -14,7 +14,8 @@
 #include <Texture.hpp>
 #include <Camera.hpp>
 
-#define TEXTURE_PATH "/tmp/scop/textures/wall.jpg"
+#define SCR_WIDTH 1920
+#define SCR_HEIGHT 1080
 
 class Renderer
 {

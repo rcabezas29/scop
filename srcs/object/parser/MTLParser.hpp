@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <map>
 #include <fstream>
 #include <iostream>
 #include <cstring>
@@ -9,7 +9,7 @@
 class MTLParser
 {
 	private:
-		std::vector<Material>	_materials;
+		std::map<std::string, Material>	_materials;
 
 	public:
 		MTLParser(const std::string file_path);
@@ -34,5 +34,7 @@ class MTLParser
                     return this->message.c_str();
                 }
         };
+
+		const std::map<std::string, Material> &get_materials() const { return this->_materials; }
 };
 

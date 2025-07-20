@@ -12,7 +12,6 @@ MTLParser::MTLParser(const std::string file_path)
 			std::string	mat_name = line.substr(line.find(' ') + 1);
 			Material	new_mat;
 
-			new_mat.name = mat_name;
 			while (std::getline(mtl_file, line) && strncmp("newmtl ", line.c_str(), 7))
 			{
 				if (!strncmp("Ka ", line.c_str(), 3))
@@ -28,6 +27,7 @@ MTLParser::MTLParser(const std::string file_path)
 				else if (!strncmp("Ni ", line.c_str(), 3))
 					new_mat.refraction_index = this->parse_refraction_index(line.c_str());
 			}
+			this->_materials.insert(std::make_pair(mat_name, new_mat));
 		}
 	}
 }
@@ -87,7 +87,7 @@ float	MTLParser::parse_transparency(const char *line) const
 {
 	float	x;
 
-	int	scan_ret = sscanf(line, "Tr %f", &x);
+	int	scan_ret = sscanf(line, "d %f", &x);
 	if (scan_ret != 1)
 		throw ParsingMTLException("Error while reading transparency");
 	return x;

@@ -1,8 +1,5 @@
 #include <Renderer.hpp>
 
-unsigned int SCR_WIDTH = 800;
-unsigned int SCR_HEIGHT = 600;
-
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
 	(void)window;
@@ -12,12 +9,9 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 void	Renderer::scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 {
 	(void)xoffset;	
-	// Get the renderer instance from the window user pointer
 	Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
 	if (renderer)
 		renderer->_camera.processScroll(static_cast<float>(yoffset));
-
-	// This function is not used in the current implementation, but can be used to handle scroll input.
 }
 
 void Renderer::processInput(GLFWwindow *window)
@@ -44,7 +38,7 @@ Renderer::Renderer() : _useTexture(true)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	this->_window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+	this->_window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
 	if (this->_window == NULL)
 	{
 		std::cerr << "Failed to create GLFW window" << std::endl;
@@ -56,9 +50,9 @@ Renderer::Renderer() : _useTexture(true)
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cerr << "Failed to initialize GLAD" << std::endl;
-		return;
+		return ;
 	}
-	glViewport(0, 0, 800, 600);
+	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 	glfwSetFramebufferSizeCallback(this->_window, framebuffer_size_callback);
 	glfwSetWindowUserPointer(this->_window, this);
 	glfwSetScrollCallback(this->_window, Renderer::scroll_callback);
@@ -92,17 +86,19 @@ void Renderer::render(const Object &obj)
 
 	std::vector<float> vertices_data;
 	std::vector<unsigned int> indices_vec;
-	float texCoord[] = {
-		1.0f, 1.0f,
-		1.0f, 0.0f,
-		0.0f, 0.0f,
-		0.0f, 1.0f};
 
 	for (const Face *face : obj.get_faces())
 		for (const int &index : face->indices)
 			indices_vec.push_back(index - 1); // Get the index of the vertex in the vertices vector
 	srand(time(NULL));
-	int i = 0;
+	float max_y = 0.0f, max_z = 0.0f;
+	for (const Vertex &vertex : obj.get_vertices())
+	{
+		if (vertex.y > max_y)
+			max_y = vertex.y;
+		if (vertex.z > max_z)
+			max_z = vertex.z;
+	}
 	for (const Vertex &vertex : obj.get_vertices())
 	{
 		vertices_data.push_back(vertex.x);
@@ -113,16 +109,13 @@ void Renderer::render(const Object &obj)
 		vertices_data.push_back(((double)rand()) / RAND_MAX); // Green
 		vertices_data.push_back(((double)rand()) / RAND_MAX); // Blue
 
-		vertices_data.push_back(texCoord[i % 8]); // U coordinate
-		++i;
-		vertices_data.push_back(texCoord[i % 8]); // V coordinate
-		++i;
+		vertices_data.push_back(vertex.y / max_y); // U coordinate
+		vertices_data.push_back(vertex.z / max_z); // V coordinate
 	}
 
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
-	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);

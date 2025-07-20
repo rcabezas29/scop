@@ -4,6 +4,7 @@ ObjParser::ObjParser(const std::string file_path)
 {
 	std::fstream	obj_file(file_path);
 	std::string		line;
+	Material		*using_material = nullptr;
 
 	while (std::getline(obj_file, line))
 	{
@@ -14,9 +15,19 @@ ObjParser::ObjParser(const std::string file_path)
 		else if (!strncmp("l ", line.c_str(), 2))
 			this->parse_line(line.c_str());
 		else if (!strncmp("f ", line.c_str(), 2))
-			this->parse_face(line.c_str());
+			this->parse_face(line.c_str(), using_material);
 		else if (!strncmp("mtllib ", line.c_str(), 7))
-			this->parse_materials_file(line);
+			this->parse_materials_file(file_path.substr(0, file_path.find_last_of('/') + 1) + line.substr(7));
+		else if (!strncmp("usemtl ", line.c_str(), 7))
+		{
+			std::string	mat_name = line.substr(7);
+			auto	it = this->_materials.find(mat_name);
+			
+			if (it != this->_materials.end())
+				using_material = &it->second;
+			else
+				throw ParsingObjectException("Material " + mat_name + " not found");
+		}
 	}
 }
 
@@ -60,7 +71,7 @@ void	ObjParser::parse_line(const char *line)
 		throw ParsingObjectException("Error while reading a line");
 }
 
-void	ObjParser::parse_face(const char *line)
+void	ObjParser::parse_face(const char *line, Material *material)
 {
 	int	a, b, c, d;
 
@@ -75,6 +86,8 @@ void	ObjParser::parse_face(const char *line)
 		new_face->indices[0] = a;
 		new_face->indices[1] = b;
 		new_face->indices[2] = c;
+		if (material)
+			new_face->material = material;
 
 		this->_faces.push_back(new_face);
 	}
@@ -88,6 +101,8 @@ void	ObjParser::parse_face(const char *line)
 		new_face->indices[0] = a;
 		new_face->indices[1] = b;
 		new_face->indices[2] = c;
+		if (material)
+			new_face->material = material;
 
 		this->_faces.push_back(new_face);
 		new_face = new Face();
@@ -97,6 +112,8 @@ void	ObjParser::parse_face(const char *line)
 		new_face->indices[0] = a;
 		new_face->indices[1] = c;
 		new_face->indices[2] = d;
+		if (material)
+			new_face->material = material;
 
 		this->_faces.push_back(new_face);
 	}
@@ -106,8 +123,8 @@ void	ObjParser::parse_face(const char *line)
 
 void	ObjParser::parse_materials_file(const std::string line)
 {
-	MTLParser	mtl_parser(line.substr(line.find(' ') + 1));
-
+	MTLParser	mtl_parser(line);
+	this->_materials = mtl_parser.get_materials();
 }
 
 Object	ObjParser::generate_object() const

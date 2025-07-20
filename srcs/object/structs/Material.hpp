@@ -9,10 +9,8 @@ struct Color
 	float	b;
 };
 
-
 struct Material
 {
-	std::string	name;
 	Color		ambient_color;
 	Color		diffuse_color;
 	Color		specular_color;
